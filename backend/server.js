@@ -3,6 +3,7 @@ import connectDB from "./db.js";
 import Complaint from "./models/complaint.js";
 import cloudinary from "./cloudinary.js";
 import axios from "axios";
+import getRoadwaysPriority from "./utils/roadwayPriority.js";
 
 const app = express();
 connectDB();
@@ -44,8 +45,8 @@ app.post("/webhook", async (req, res) => {
       const response = await axios.get(mediaUrl, {
         responseType: "arraybuffer",
         auth: {
-          username: "xxxxxxxx",
-          password: "xxxxxxxx"
+          username: "AC87151eb4493e75704993964fc7073c29",
+          password: "00938e9ec23adf56d713cfaa884c15e5"
         }
       });
 
@@ -61,11 +62,14 @@ app.post("/webhook", async (req, res) => {
       console.log("Uploaded to Cloudinary:", finalImageUrl);
 
       // store temporarily
-      tempStorage[from] = {
+     tempStorage[from] = {
         category,
         description,
         imageUrl: finalImageUrl
       };
+
+
+      
 
       reply = "📍 Please enter your address/location for this complaint.";
 
@@ -126,7 +130,7 @@ Please choose the type of your problem:
   }
 
   // ✅ STEP 5: ADDRESS → FINAL SAVE
-  else if (tempStorage[from]) {
+  /*else if (tempStorage[from]) {
 
     const { category, description, imageUrl } = tempStorage[from];
     const address = message;
@@ -163,7 +167,76 @@ Please choose the type of your problem:
         <Message>${reply}</Message>
       </Response>
     `);
+  }*/
+
+    else if (tempStorage[from]) {
+
+  const { category, description, imageUrl } = tempStorage[from];
+  const address = message;
+
+  console.log("Address received:", address);
+
+  try {
+    // 🧠 Normalize inputs
+    const normalizedAddress = address.trim().toLowerCase();
+
+    // 🔁 Map category to standard format
+    let mappedCategory = "";
+
+    if (category === "pothole") mappedCategory = "POTHOLE";
+    else if (category === "accident") mappedCategory = "ACCIDENT";
+    else if (category === "drainage") mappedCategory = "WATERLOGGING";
+
+    // 🚧 Department (for now)
+    const department = "ROADWAYS";
+
+    // 🔁 Frequency (same category + same address)
+    const frequency = await Complaint.countDocuments({
+      category: mappedCategory,
+      address: normalizedAddress,
+      department
+    });
+
+    // ⚡ Priority calculation
+    const priority = getRoadwaysPriority(
+      mappedCategory,
+      frequency + 1
+    );
+
+    // 💾 Save complaint
+    await Complaint.create({
+      phone: from,
+      category: mappedCategory,
+      description,
+      imageUrl,
+      address: normalizedAddress,
+      department,
+      priority
+    });
+
+    console.log("Complaint saved with priority:", priority);
+
+    // cleanup
+    delete userState[from];
+    delete descriptionStore[from];
+    delete tempStorage[from];
+
+    reply = `✅ Complaint registered successfully!
+📍 Address: ${address}
+⚡ Priority: ${priority}`;
+
+  } catch (error) {
+    console.error("DB error:", error);
+    reply = "❌ Error saving complaint.";
   }
+
+  res.set("Content-Type", "text/xml");
+  return res.send(`
+    <Response>
+      <Message>${reply}</Message>
+    </Response>
+  `);
+}
 
   // fallback
   else {
