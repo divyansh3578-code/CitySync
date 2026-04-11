@@ -1,0 +1,193 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #f0f1f3;
+  --bg2: #e8eaed;
+  --fg: #0e1117;
+  --card: #ffffff;
+  --primary: #1a9e8f;
+  --primary-light: #22c5b2;
+  --orange: #f0792a;
+  --blue: #4a90d9;
+  --green: #1a9e8f;
+  --red: #e04b4b;
+  --yellow: #f5a623;
+  --muted: #7a8799;
+  --border: #dde1e7;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+  cursor: none;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Sora', system-ui, sans-serif;
+}
+
+/* ── CUSTOM CURSOR ── */
+#cursor {
+  position: fixed;
+  width: 12px;
+  height: 12px;
+  background: var(--primary);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: width 0.15s, height 0.15s, background 0.15s;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+  opacity: 0;
+}
+
+#cursor-ring {
+  position: fixed;
+  width: 38px;
+  height: 38px;
+  border: 2px solid var(--primary);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%, -50%);
+  transition: width 0.2s ease, height 0.2s ease, opacity 0.2s, border-color 0.2s;
+  opacity: 0;
+}
+
+body.cursor-hover #cursor {
+  width: 18px;
+  height: 18px;
+}
+
+body.cursor-hover #cursor-ring {
+  width: 50px;
+  height: 50px;
+  opacity: 0.3 !important;
+}
+
+/* ── PHOTO SCROLL ── */
+.photo-scroll-track {
+  overflow: hidden;
+  mask: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+  -webkit-mask: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+}
+
+.photo-scroll-inner {
+  display: flex;
+  gap: 1rem;
+  animation: photoscroll 28s linear infinite;
+  width: max-content;
+}
+
+.photo-scroll-inner:hover {
+  animation-play-state: paused;
+}
+
+@keyframes photoscroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ── SCROLL REVEAL ── */
+.sr {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.sr.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── FLOATING PILL ANIMATIONS ── */
+.float-0 { animation: floatPill 3s ease-in-out infinite; }
+.float-1 { animation: floatPill 3s ease-in-out infinite 0.4s; }
+.float-2 { animation: floatPill 3s ease-in-out infinite 0.8s; }
+.float-3 { animation: floatPill 3s ease-in-out infinite 1.2s; }
+
+@keyframes floatPill {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.5); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── CONFIDENCE BAR ── */
+.conf-bar {
+  width: 80px;
+  height: 6px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.conf-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+
+/* ── TYPING INDICATOR ── */
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+
+.typing-dot:nth-child(1) { animation: typingBounce 1.2s infinite 0s; }
+.typing-dot:nth-child(2) { animation: typingBounce 1.2s infinite 0.15s; }
+.typing-dot:nth-child(3) { animation: typingBounce 1.2s infinite 0.3s; }
+
+/* ── TAGS CLOUD ── */
+.tag-pill:hover {
+  transform: scale(1.08) rotate(0deg) !important;
+}
+
+/* ── TIMELINE ── */
+.tl-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 16px;
+  top: 36px;
+  bottom: -8px;
+  width: 2px;
+  background: var(--border);
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
