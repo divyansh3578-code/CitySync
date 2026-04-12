@@ -185,6 +185,20 @@ body.cursor-hover #cursor-ring {
   width: 2px;
   background: var(--border);
 }
+@media(max-width: 900px){
+
+  .sr-r img{
+    display: none;
+  }
+
+  .sr-r p{
+    display: none;
+  }
+
+}
+.hero-right img {
+  margin-left: auto;
+}
 
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 6px; }

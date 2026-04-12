@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
 import { useScrollReveal } from '../hooks/useScrollReveal'
-
+import loopImg from '../assets/loop.png'
+import stacksImg from '../assets/stacks.png'
 const WHATSAPP = '919999999999'
 
 const photos = [
@@ -92,46 +93,76 @@ export default function Home() {
               >
                 Track Complaint →
               </button>
+
+            </div>
+            {/* Stacks Image */}
+            <div style={{ marginTop: '2.5rem' }} className="sr">
+
+              <div style={{
+  position: 'relative',
+  display: 'inline-block'
+}}>
+
+  {/* Shadow */}
+  <div style={{
+    position: 'absolute',
+    bottom: '-10px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: '70%',
+    height: '40px',
+    background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.18), transparent 70%)',
+    filter: 'blur(14px)',
+    opacity: 0.8,
+    zIndex: 0
+  }} />
+
+  {/* Image */}
+  <img
+    src={stacksImg}
+    alt="City Issues"
+    style={{
+      width: '460px',
+      maxWidth: '100%',
+      transform: 'rotate(-3deg)',
+      marginLeft: '-10px',
+      position: 'relative',
+      zIndex: 1
+    }}
+  />
+
+</div>
+
             </div>
           </div>
 
           {/* Right - Cycle diagram */}
-          <div className="flex items-center justify-center" style={{ animation: 'fadeUp 0.7s ease 0.2s both' }}>
-            <div style={{ position: 'relative', width: 420, height: 420 }}>
-              {/* Center circle */}
-              <div style={{
-                position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-                width: 90, height: 90, background: 'var(--fg)', borderRadius: '50%',
-              }} className="flex flex-col items-center justify-center gap-0.5">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2">
-                  <circle cx="12" cy="8" r="3" /><circle cx="6" cy="14" r="2.5" /><circle cx="18" cy="14" r="2.5" />
-                  <path d="M12 11v3M8.8 12.6L6 14M15.2 12.6L18 14" />
-                </svg>
-                <span style={{ fontFamily: "'Sora',sans-serif", fontSize: '0.5rem', fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.05em' }}>CITYSYNC</span>
-              </div>
-              {/* Pills */}
-              {[
-                { label: 'Issue Reported', color: '#1a9e8f', style: { top: '4%', right: '8%' }, delay: 0 },
-                { label: 'AI Classifies', color: '#4a90d9', style: { top: '38%', right: '-4%' }, delay: 0.8 },
-                { label: 'Dept Assigned', color: '#4a90d9', style: { bottom: '20%', left: '12%' }, delay: 1.2 },
-                { label: 'In Progress', color: '#f0792a', style: { top: '32%', left: '-2%' }, delay: 0.4 },
-              ].map((p, i) => (
-                <div key={i} style={{
-                  position: 'absolute', ...p.style,
-                  background: p.color, padding: '0.65rem 1.4rem', borderRadius: '9999px',
-                  fontFamily: "'Sora',sans-serif", fontWeight: 700, fontSize: '0.9rem', color: '#fff',
-                  whiteSpace: 'nowrap', boxShadow: '0 4px 20px rgba(0,0,0,.15)',
-                  animation: `floatPill 3s ease-in-out infinite ${p.delay}s`,
-                }}>
-                  {p.label}
-                </div>
-              ))}
-              {/* Background SVG lines */}
-              <svg style={{ position: 'absolute', inset: 0, opacity: 0.15 }} viewBox="0 0 420 420">
-                <circle cx="210" cy="210" r="150" fill="none" stroke="var(--fg)" strokeWidth="1" strokeDasharray="6 8" />
-                <circle cx="210" cy="210" r="90" fill="none" stroke="var(--primary)" strokeWidth="1" strokeDasharray="4 6" />
-              </svg>
-            </div>
+          {/* Right - Loop Image */}
+          <div className="flex flex-col items-center justify-center sr-r">
+
+            <img
+              src={loopImg}
+              alt="Issue Cycle"
+              style={{
+                width: '520px',
+                maxWidth: '100%',
+                transform: 'translateX(40px)'
+              }}
+            />
+
+            <p
+              style={{
+                textAlign: 'center',
+                marginTop: '1.2rem',
+                color: 'var(--muted)',
+                fontSize: '0.95rem',
+                lineHeight: '1.6'
+              }}
+            >
+              Reports get delayed.<br />
+              Issues remain unresolved.
+            </p>
+
           </div>
         </div>
 
@@ -302,7 +333,7 @@ export default function Home() {
         </section>
       </div>
 
-      
+
 
       {/* ── CTA BANNER ── */}
       <div style={{ background: 'var(--primary)', padding: '4.5rem 0' }}>
