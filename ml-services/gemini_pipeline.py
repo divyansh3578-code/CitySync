@@ -46,9 +46,10 @@ RETRY_BASE_DELAY = 5  # seconds, doubles each retry (handles 429 rate limits)
 # --- Response schema (Gemini fills this in directly, no manual parsing) --
 
 class Department(str, Enum):
-    ROADWAYS = "Roadways"
-    WATERWAYS = "Waterways / Drainage"
-    SANITATION = "Sanitation / Other"
+    ROADS = "Roads & Public Works"
+    DRAINAGE = "Drainage & Water Management"
+    SANITATION = "Sanitation & Solid Waste"
+    RAILWAY = "Railway / Transport"
     NOT_APPLICABLE = "N/A"
 
 
@@ -66,16 +67,25 @@ class ComplaintAnalysis(BaseModel):
         "problem (e.g. it's a selfie, random object, food, unrelated scene, or a "
         "duplicate/joke upload)."
     )
+    text_matches_image: bool = Field(
+        description="False if the citizen's text description describes a clearly "
+        "different problem than what is actually visible in the image (e.g. text says "
+        "'pothole' but the image shows an overflowing garbage bin, or text says "
+        "'flooding' but the image shows a fallen tree). True if the text is consistent "
+        "with the image, or if no text was provided."
+    )
     rejection_reason: Optional[str] = Field(
         default=None,
-        description="If is_valid_civic_image is False, a short reason why (e.g. "
-        "'Image shows a person, not an infrastructure issue').",
+        description="If is_valid_civic_image is False, explain why (e.g. 'Image shows "
+        "a person, not an infrastructure issue'). If text_matches_image is False, "
+        "explain the mismatch instead (e.g. 'Text describes a pothole but the image "
+        "shows an overflowing garbage bin').",
     )
     problem: Optional[str] = Field(
         default=None, description="Short name of the detected problem, e.g. 'Pothole', "
         "'Garbage dumping', 'Waterlogging', 'Broken streetlight'."
     )
-    department: Department = Field(description="Which civic department this belongs to.")
+    department: Department = Field(description="Which department this belongs to.")
     confidence: float = Field(description="Model's confidence in this classification, 0 to 1.")
     severity: Severity = Field(description="Severity of the issue.")
     severity_score: int = Field(description="Severity score from 0 (none) to 100 (critical), "
@@ -84,37 +94,71 @@ class ComplaintAnalysis(BaseModel):
                             "referencing what's visible in the image and/or the text.")
 
 
-SYSTEM_PROMPT = """You are the AI classification engine for CivicSeva, a citizen \
+SYSTEM_PROMPT = """You are the AI classification engine for CitySync, a citizen \
 civic-complaint platform. You will be shown a photo a citizen uploaded, along with \
 their text description of the problem.
 
 Your job, in one pass:
 
-1. VALIDATE: Check whether the image actually shows a real civic infrastructure \
-problem (potholes/road damage, garbage/waste dumping, waterlogging/drainage issues, \
-broken streetlights, damaged public property, etc). If the image is irrelevant \
-(selfies, random objects, food, pets, screenshots, memes, or anything unrelated to \
-a civic issue), set is_valid_civic_image to false and explain why in rejection_reason. \
-Do NOT guess a department or severity for invalid images -- use "N/A" for both.
+1. VALIDATE THE IMAGE: Check whether the image actually shows a real civic \
+infrastructure problem covered by one of the four departments below. If the image is \
+irrelevant (selfies, random objects, food, pets, screenshots, memes, or anything \
+unrelated to a civic issue), set is_valid_civic_image to false and explain why in \
+rejection_reason. Do NOT guess a department or severity for invalid images -- use \
+"N/A" for both, and set text_matches_image to true (mismatch doesn't apply if the \
+image itself is invalid).
 
-2. CATEGORIZE: If valid, identify the specific problem and map it to exactly one \
-department:
-   - Roadways: potholes, road damage, broken pavement, cracked roads,traffic
-   - Waterways / Drainage: waterlogging, flooding, blocked drains, sewage overflow
-   - Sanitation / Other: garbage/waste dumping, broken streetlights, damaged public \
-property, anything else civic-related that isn't roads or water
+2. CHECK TEXT-IMAGE CONSISTENCY: Compare the citizen's text description to what is \
+actually visible in the image. If they describe a clearly different problem than what \
+the image shows (e.g. text says "pothole" but the image shows garbage, or text says \
+"flooding" but the image shows a fallen tree), set text_matches_image to false and \
+explain the mismatch in rejection_reason. This applies even when the image itself is a \
+valid civic problem -- a real problem with a mismatched description is still flagged \
+as a mismatch, not silently corrected. If no text was provided, or the text is \
+consistent with the image, set text_matches_image to true.
 
-3. ASSESS SEVERITY: Based on both the image and the citizen's text, score severity \
-0-100 and assign a label:
+3. CATEGORIZE: If the image is valid AND the text matches, identify the specific \
+problem and map it to exactly one department:
+
+   - Roads & Public Works: potholes, damaged roads, road cracks, broken/uneven \
+footpaths, damaged road dividers, damaged bridges, road cave-ins, damaged speed \
+breakers, missing/damaged road signs, road obstruction, damaged public infrastructure, \
+illegal digging/damage to roads, fallen objects blocking roads, damaged bus stops, \
+unsafe road conditions.
+
+   - Drainage & Water Management: waterlogging, flooded roads, blocked drains, \
+overflowing drains, open drains, broken drainage covers, open manholes, sewer \
+overflow, sewage leakage, drainage pipe damage, storm-water drainage problems, water \
+stagnation, rainwater accumulation, drain cleaning requests, local flooding, broken \
+culverts.
+
+   - Sanitation & Solid Waste: garbage dumping, uncollected garbage, overflowing \
+garbage bins, garbage on roads, garbage in public places, illegal dumping, \
+construction waste, dead animal waste, dirty streets, public-place cleanliness, waste \
+collection problems, plastic/waste accumulation, burning of waste, garbage around \
+markets, unsanitary public areas.
+
+   - Railway / Transport: railway track obstruction, fallen objects on railway \
+tracks, waterlogging near railway areas, garbage near railway premises, damaged \
+railway infrastructure, broken railway fencing, damaged platforms, platform \
+cleanliness, broken/unsafe railway facilities, railway crossing problems, railway \
+signal-related complaints, encroachment near railway property, unauthorized dumping \
+near railway tracks, safety hazards around railway areas.
+
+   If a valid civic problem doesn't clearly fit any of these four departments, still \
+pick the closest match rather than inventing a new category.
+
+4. ASSESS SEVERITY: Based on both the image and the citizen's text, score severity \
+0-100 and assign a label (skip this, use "N/A" and score 0, if the image is invalid or \
+the text doesn't match):
    - LOW (0-29): minor, cosmetic, no safety risk
    - MEDIUM (30-54): noticeable problem, inconvenience, no immediate danger
    - HIGH (55-79): significant hazard, affecting traffic/access/health, needs prompt action
    - CRITICAL (80-100): immediate danger to life/property, needs urgent response
 
-Be conservative and honest -- do not inflate severity, and do not force a \
-classification onto an image that doesn't clearly show a civic problem. Citizens \
-may exaggerate in their text description; weigh the actual image content more \
-heavily than the text when they disagree."""
+Be conservative and honest -- do not inflate severity, do not force a classification \
+onto an image that doesn't clearly show a civic problem, and do not silently ignore a \
+mismatch between the citizen's words and their photo."""
 
 
 # --- Core pipeline function ---------------------------------------------
@@ -185,6 +229,12 @@ def _format_output(result: ComplaintAnalysis) -> dict:
         return {
             "status": "INVALID_IMAGE",
             "message": result.rejection_reason or "Image does not show a valid civic problem.",
+        }
+
+    if not result.text_matches_image:
+        return {
+            "status": "INVALID_IMAGE",
+            "message": result.rejection_reason or "The description does not match what's shown in the image.",
         }
 
     return {
